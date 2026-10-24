@@ -196,6 +196,57 @@ pub fn show(app: &mut WordApp, ctx: &egui::Context, selection: Rect, viewport: R
         let used = child.min_rect();
         ctx.data_mut(|d| d.insert_temp(shown_id(), [bar, used]));
     });
+    ai_chip(app, ctx, bar, viewport);
+}
+
+/// Width and height of the AI chip beside the bar (AI-Word on the web).
+const AI_CHIP_W: f32 = 58.0;
+const AI_CHIP_H: f32 = 28.0;
+
+/// Where the AI chip sits: right of the bar, its top level with the bar's; left of it when the
+/// viewport has no room on the right. Pure geometry.
+pub fn ai_chip_rect(bar: Rect, viewport: Rect) -> Rect {
+    let right = Rect::from_min_size(pos2(bar.max.x + 6.0, bar.min.y), Vec2::new(AI_CHIP_W, AI_CHIP_H));
+    if right.max.x <= viewport.max.x { right } else { right.translate(Vec2::new(-(bar.width() + AI_CHIP_W + 12.0), 0.0)) }
+}
+
+/// The AI chip: opens the page's AI menu for the selection, just below the chip.
+fn ai_chip(app: &mut WordApp, ctx: &egui::Context, bar: Rect, viewport: Rect) {
+    if app.services.ai_assist.is_none() {
+        return;
+    }
+    let chip = ai_chip_rect(bar, viewport);
+    let shown = chip.intersect(viewport);
+    if !shown.is_positive() {
+        return;
+    }
+    let t = Tokens::get(ctx);
+    let area = egui::Area::new(egui::Id::new("wc_ai_chip")).order(Order::Middle).interactable(true);
+    let area = area.constrain_to(viewport).constrain(false).fixed_pos(chip.min);
+    area.show(ctx, |ui| {
+        ui.set_clip_rect(shown);
+        let (r, resp) = ui.allocate_exact_size(chip.size(), Sense::click());
+        let resp = resp.on_hover_text(tl!("AI Assistant: rewrite, translate, check, explain")).on_hover_cursor(egui::CursorIcon::PointingHand);
+        resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("AI Assistant")));
+        let painter = ui.painter();
+        let radius = CornerRadius::same((AI_CHIP_H / 2.0) as u8);
+        painter.rect_filled(r.translate(Vec2::new(0.0, 2.0)), radius, t.page_shadow);
+        let fill = if resp.hovered() { t.accent_text } else { t.accent };
+        painter.rect_filled(r, radius, fill);
+        crate::icons::paint(
+            painter,
+            Rect::from_center_size(pos2(r.min.x + 17.0, r.center().y), Vec2::splat(16.0)),
+            "sparkle",
+            t.on_accent,
+            t.on_accent,
+        );
+        painter.text(pos2(r.min.x + 28.0, r.center().y), egui::Align2::LEFT_CENTER, tl!("AI"), crate::theme::semibold(12.5), t.on_accent);
+        if resp.clicked()
+            && let Some(open) = app.services.ai_assist.as_ref()
+        {
+            open(r.min.x, r.max.y + 6.0);
+        }
+    });
 }
 
 /// A text context menu offers formatting at a caret too. Object and equation menus keep their
@@ -445,6 +496,16 @@ mod tests {
         let a = visible_anchor([partial], clip).unwrap();
         let bar = anchor_rect(a.min.y, a.min.x, clip).unwrap();
         assert!(bar.min.y >= clip.top() - 1e-3 && bar.max.y <= clip.bottom() + 1e-3);
+    }
+
+    #[test]
+    fn the_ai_chip_sits_right_of_the_bar_or_left_when_there_is_no_room() {
+        let bar = Rect::from_min_size(pos2(100.0, 50.0), Vec2::new(BAR_W, BAR_H));
+        let chip = ai_chip_rect(bar, vp());
+        assert!(chip.min.x > bar.max.x && chip.min.y == bar.min.y);
+        let tight = Rect::from_min_max(pos2(0.0, 0.0), pos2(bar.max.x + 10.0, 800.0));
+        let chip = ai_chip_rect(bar, tight);
+        assert!(chip.max.x < bar.min.x);
     }
 
     #[test]

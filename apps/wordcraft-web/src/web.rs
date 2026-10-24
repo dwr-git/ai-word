@@ -283,6 +283,8 @@ fn services(inbox: Inbox, ctx: egui::Context, dirty: Rc<Cell<bool>>, saves: Asyn
         save_to_page: Some(Box::new(bridge::save_to_page)),
         // The title bar's way back to the site (studio/config.js: homeUrl).
         go_home: Some(Box::new(go_home)),
+        // The AI chip by the mini toolbar and the context menu's AI Assistant… open the page's AI menu.
+        ai_assist: Some(Box::new(bridge::ai_menu)),
         animations_enabled: Some(animations_enabled()),
         store_font: Some(Box::new(font_store::store)),
         forget_font: Some(Box::new(font_store::forget)),

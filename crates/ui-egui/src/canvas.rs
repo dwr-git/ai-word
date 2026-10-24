@@ -3421,6 +3421,18 @@ fn context_menu(app: &mut WordApp, ui: &mut Ui) {
         }
         ui.separator();
     }
+    // AI-Word on the web: the AI menu for the selection (or the whole document at a caret).
+    if app.services.ai_assist.is_some() {
+        let label = egui::RichText::new(tl!("AI Assistant…")).strong();
+        if ui.button(label).on_hover_text(tl!("AI Assistant: rewrite, translate, check, explain")).clicked() {
+            let at = ui.ctx().input(|i| i.pointer.interact_pos()).unwrap_or_else(|| ui.min_rect().left_top());
+            if let Some(open) = app.services.ai_assist.as_ref() {
+                open(at.x, at.y);
+            }
+            ui.close();
+        }
+        ui.separator();
+    }
     item(ui, app, "Cut", "edit.cut", json!({}));
     item(ui, app, "Copy", "edit.copy", json!({}));
     // How to paste, chosen before pasting (#2583): the ribbon's Paste menu, item for item. Paste

@@ -16,7 +16,9 @@
 //!
 //! Results resolve with the method's `result`; errors reject with an `Error`. Save and Save As
 //! reach the page as an `aiword:save` event on `window` (`detail: {name, path, saveAs, bytes}`),
-//! and whether the document has unsaved changes as `aiword:dirty` (`detail: {dirty}`).
+//! and whether the document has unsaved changes as `aiword:dirty` (`detail: {dirty}`). The AI chip
+//! and the context menu's AI Assistant… ask for the page's AI menu with `aiword:ai`
+//! (`detail: {x, y}`, CSS pixels from the canvas's top left).
 
 use std::cell::RefCell;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
@@ -205,6 +207,12 @@ pub fn save_to_page(name: &str, path: Option<&str>, bytes: &[u8], named: bool) -
     put("bytes", &js_sys::Uint8Array::from(bytes).into())?;
     notify("save", &detail.into())?;
     Ok(true)
+}
+
+/// Ask the page to open its AI menu at this point of the canvas (CSS pixels from its top left):
+/// `aiword:ai` with `detail: {x, y}`.
+pub fn ai_menu(x: f32, y: f32) {
+    let _ = notify("ai", &to_js(&json!({ "x": x, "y": y })));
 }
 
 /// Whether the page said it takes saves (`aiword.listen(true)`).

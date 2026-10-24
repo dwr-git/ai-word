@@ -1329,6 +1329,17 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
         }
 
         // The built-in file browser (#576): a folder, a file and the home folder.
+        // AI help: a large four-pointed sparkle and a small one.
+        "sparkle" => {
+            let star = |cx: f32, cy: f32, r: f32, k: f32, col: Color32| {
+                pen.fill(
+                    &[(cx, cy - r), (cx + k, cy - k), (cx + r, cy), (cx + k, cy + k), (cx, cy + r), (cx - k, cy + k), (cx - r, cy), (cx - k, cy - k)],
+                    col,
+                );
+            };
+            star(8.5, 11.0, 7.0, 1.6, c);
+            star(15.5, 4.5, 3.2, 0.8, a);
+        }
         // Home (the site the web editor lives on): a house with a door.
         "house" => {
             pen.closed(&[(3.0, 9.5), (10.0, 3.0), (17.0, 9.5)], c);

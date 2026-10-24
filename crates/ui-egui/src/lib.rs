@@ -131,6 +131,10 @@ pub struct Services {
     /// Web (AI-Word): leave the editor for the site it lives on (`STUDIO_CONFIG.homeUrl`). The
     /// title bar shows a house for it when set.
     pub go_home: Option<Box<dyn Fn()>>,
+    /// Web (AI-Word): open the page's AI menu for the selection (or the caret) at this point of
+    /// the window (egui points). The mini toolbar shows an AI chip and the text context menu an
+    /// "AI Assistant…" item when set.
+    pub ai_assist: Option<Box<dyn Fn(f32, f32)>>,
     /// Web: saves that `download` started and that finish later (the browser's save picker,
     /// #1315). The hook starts a ticket for such a save and reports how it ended; until then the
     /// document's save isn't confirmed, and a New/Open held back by the Save Changes prompt waits.
