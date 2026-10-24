@@ -1,11 +1,11 @@
+AI-Word (based on WordCraft)
 WordCraft
 Copyright (c) 2026 ArtCraft Team and the WordCraft contributors.
 Licensed under the MIT License or the Apache License, Version 2.0, at your option
 (LICENSE-MIT, LICENSE-APACHE).
 
-The ArtCraft name, wordmark and logos in docs/brand/ are trademarks of the ArtCraft Team. They are
-not open source and are not covered by the license above; their terms are in
-docs/brand/LICENSE-brand.txt.
+AI-Word is a modified version of WordCraft by the ArtCraft team (https://github.com/storytold/wordcraft),
+under the same license. It is not an ArtCraft product and carries none of the ArtCraft marks.
 
 Third-party material
 
@@ -106,3 +106,11 @@ The backend patch prevents finalization during an unwind and rejects a writer af
 cleanup. WordCraft enables only writing; PDF import and its image decoders are not enabled.
 
 No Microsoft, Adobe, Avid or Autodesk icons, images, templates or artwork are included.
+
+AI-Word packages (built by .github/workflows/studio.yml) also contain:
+
+- Liberation Serif, Sans and Mono (fonts/) — SIL Open Font License 1.1; fonts/LICENSE-Liberation.txt.
+- Carlito (fonts/) — SIL Open Font License 1.1; fonts/LICENSE-Carlito.txt.
+- Caladea (fonts/) — Apache License 2.0; fonts/LICENSE-Caladea.txt.
+- Russian Hunspell dictionary by Alexander I. Lebedev (dictionaries/) — BSD-style licence;
+  dictionaries/LICENSE-ru_RU.txt.

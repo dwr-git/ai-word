@@ -216,6 +216,17 @@ pub fn dictionary_generation() -> u64 {
     DICTIONARY_GENERATION.load(Ordering::Relaxed)
 }
 
+/// Install a Hunspell dictionary given as text (the web app's bundled Russian one): `lang` is
+/// the dictionary's language (`ru`). Text is checked again with it.
+pub fn install_dictionary(lang: &str, aff: &str, dic: &str) -> Result<(), String> {
+    match lang {
+        "ru" | "ru-RU" | "ru_RU" => ru::install_dictionary(aff, dic)?,
+        other => return Err(format!("no in-memory dictionary for {other}")),
+    }
+    DICTIONARY_GENERATION.fetch_add(1, Ordering::Relaxed);
+    Ok(())
+}
+
 /// Is `lower` (a lower-case word) in the user dictionary or ignored? It is looked up composed, as
 /// the entries are kept ([`dictionary_key`]).
 pub(crate) fn in_user_dictionary(lower: &str) -> bool {

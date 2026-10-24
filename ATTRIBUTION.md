@@ -2,7 +2,7 @@
 
 Every non-code asset in this repository (fonts, icons, images, example documents) is listed here with its author, source and licence. `cargo xtask assets` (part of `cargo xtask ci`) fails if an asset file is missing from this table.
 
-**Policy (mandatory):** WordCraft contains **no Microsoft, Adobe, Avid or Autodesk iconography, images, templates, themes, clip art, fonts or other assets**. Every asset is original work by WordCraft contributors or third-party material under an open licence (OSI open source, public domain / CC0, or a Creative Commons licence that allows redistribution). Screenshots of other vendors' software are never committed. New font files go to [storytold/craft-fonts](https://github.com/storytold/craft-fonts), not this repo. The one exception is the ArtCraft brand files in `docs/brand/`: ArtCraft trademarks, not open source, used under `docs/brand/LICENSE-brand.txt`.
+**Policy (mandatory):** WordCraft contains **no Microsoft, Adobe, Avid or Autodesk iconography, images, templates, themes, clip art, fonts or other assets**. Every asset is original work by WordCraft contributors or third-party material under an open licence (OSI open source, public domain / CC0, or a Creative Commons licence that allows redistribution). Screenshots of other vendors' software are never committed. New font files go to [storytold/craft-fonts](https://github.com/storytold/craft-fonts), not this repo.
 
 Generated-in-code art is original and has no file to list: the UI icon set (`crates/ui-egui/src/icons.rs`), the sample documents and templates (`crates/engine/src/sample.rs`), the table and style previews, and theme colours (`crates/engine/src/cmd/design.rs`).
 
@@ -57,14 +57,15 @@ Generated-in-code art is original and has no file to list: the UI icon set (`cra
 | `docs/images/dark.png` | WordCraft contributors | screenshot of WordCraft itself (sample document written for WordCraft, rendered by `ui_shot`) | MIT OR Apache-2.0 | Original; no Microsoft UI or assets |
 | `docs/images/backstage.png` | WordCraft contributors | screenshot of WordCraft itself (sample document written for WordCraft, rendered by `ui_shot`) | MIT OR Apache-2.0 | Original; no Microsoft UI or assets |
 | `docs/images/layout.png` | WordCraft contributors | screenshot of WordCraft itself (sample document written for WordCraft, rendered by `ui_shot`) | MIT OR Apache-2.0 | Original; no Microsoft UI or assets |
-| `docs/brand/LICENSE-brand.txt` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-logo-white.png` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-logo-white.svg` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-logo.png` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-logo.svg` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-mark-black.png` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-mark-black.svg` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-mark.png` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
-| `docs/brand/artcraft-mark.svg` | ArtCraft Team | craftrules `assets/brand/` | ArtCraft trademark, `docs/brand/LICENSE-brand.txt` | Not open source; usable unmodified only |
 | craft-fonts (optional build input, not files in this repo): BIZ UDPGothic, BIZ UDMincho, Shippori Mincho, Noto Sans CJK SC, Noto Sans Arabic | see https://github.com/storytold/craft-fonts/blob/main/ATTRIBUTION.md | embedded only when built with `CRAFT_FONTS_DIR` (all official releases) | OFL-1.1 | Japanese and Chinese UI, Japanese document fallback |
 | craft-i18n (optional build input, not files in this repo): the interface translations | see https://github.com/storytold/craft-i18n/blob/main/ATTRIBUTION.md, which credits every translator of WordCraft's former in-repo catalogs (`crates/ui-egui/src/i18n/*.tsv`, migrated at `wordcraft@806a945`) | embedded only when built with `CRAFT_I18N_DIR`, at the commit in `craft-i18n.rev` (all official releases) | MIT OR Apache-2.0 | Interface languages other than English; clean-room translations from the English interface labels |
+
+## AI-Word additions (not in the repository; fetched by the build)
+
+| Path in the package | Author | Source | Licence | Notes |
+|---|---|---|---|---|
+| `fonts/Liberation*.ttf` | Red Hat, Inc. (Liberation Fonts) | Ubuntu package `fonts-liberation` (CI) | SIL Open Font License 1.1 | Metric-compatible with Times New Roman, Arial, Courier New; licence in `fonts/LICENSE-Liberation.txt` |
+| `fonts/Carlito-*.ttf` | tyPoland Łukasz Dziedzic | Ubuntu package `fonts-crosextra-carlito` (CI) | SIL Open Font License 1.1 | Metric-compatible with Calibri; `fonts/LICENSE-Carlito.txt` |
+| `fonts/Caladea-*.ttf` | Andrés Torresi, Carolina Giovagnoli (Huerta Tipográfica) | Ubuntu package `fonts-crosextra-caladea` (CI) | Apache License 2.0 | Metric-compatible with Cambria; `fonts/LICENSE-Caladea.txt` |
+| `dictionaries/ru_RU.aff`, `ru_RU.dic` | Alexander I. Lebedev | Ubuntu package `hunspell-ru` (LibreOffice dictionaries) | BSD-style (licence text kept as `dictionaries/LICENSE-ru_RU.txt`) | Russian spelling |
+| `favicon.png`, `apple-touch-icon.png` (`studio/web/`) | AI-Word contributors | drawn for AI-Word | MIT OR Apache-2.0 | A page with lines of text in a frame |

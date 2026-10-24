@@ -12,12 +12,17 @@ use wordcraft_ui_egui::{Inbox, Services, WordApp};
 const DOC_EXTS: &[&str] = &["docx", "docm", "dotx", "dotm", "doc", "dot", "odt", "rtf", "txt", "md", "html", "htm", "tex", "json", "xml"];
 const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "gif", "webp", "bmp", "wmf", "emf"];
 const RECIPIENT_EXTS: &[&str] = wordcraft_engine::cmd::mailings::RECIPIENT_EXTENSIONS;
+mod bridge;
 mod font_store;
 const CANVAS_ID: &str = "wordcraft_canvas";
 const LOADING_ID: &str = "wordcraft_loading";
 
 pub fn start() {
     eframe::WebLogger::init(log::LevelFilter::Info).ok();
+    // The page's assistant panel and server files (`window.aiword`).
+    if let Err(e) = bridge::install() {
+        log::error!("couldn't install window.aiword: {e:?}");
+    }
     wasm_bindgen_futures::spawn_local(async {
         let Some(document) = web_sys::window().and_then(|w| w.document()) else {
             log::error!("no document");
@@ -61,13 +66,24 @@ pub fn start() {
                     let mut session = Session::new(doc);
                     session.system_region = region;
                     let messages = Rc::new(RefCell::new(Vec::new()));
-                    let mut app = WordApp::new(session, services(inbox.clone(), cc.egui_ctx.clone(), dirty, saves.clone(), messages.clone()));
+                    let (requests, control) = std::sync::mpsc::channel();
+                    bridge::connect(requests, inbox.clone(), cc.egui_ctx.clone());
+                    let mut app = WordApp::new(session, services(inbox.clone(), cc.egui_ctx.clone(), dirty, saves.clone(), messages.clone()))
+                        .with_control(control);
                     // Pasted pictures wait apart from dropped files: the app inserts one only when the page is the edit target (#1349).
                     app.services.pasted = Some(pasted);
                     app.autosave = false;
                     // Preferences from an earlier visit (#2132), as the desktop app reads `ui.json`.
                     let stored = stored_prefs();
                     crate::prefs::restore(&mut app, stored.as_deref());
+                    // AI-Word's first start: the Russian interface, Russian as the documents'
+                    // language, the light theme Word users know, and no community links.
+                    if stored.is_none() {
+                        let _ = app.run("ui.language", serde_json::json!({"value": "ru"}));
+                        app.session.prefs.default_language = Some("ru-RU".into());
+                        app.ui.theme = wordcraft_ui_egui::theme::Appearance::Light;
+                    }
+                    app.ui.show_discord = false;
                     // A region chosen in File › Options replaces the browser's for the first blank
                     // document too (#838).
                     if !sample && app.session.prefs.region.is_some() {
@@ -86,7 +102,10 @@ pub fn start() {
         if let Some(el) = document.get_element_by_id(LOADING_ID) {
             match result {
                 Ok(()) => el.remove(),
-                Err(e) => el.set_inner_html(&format!("<p>WordCraft failed to start: {e:?}</p><p>A browser with WebGPU or WebGL2 is required.</p>")),
+                Err(e) => el.set_inner_html(&format!(
+                    "<p>AI-Word не запустился: {}</p><p>Нужен браузер с WebGPU или WebGL2: свежий Chrome, Edge, Firefox или Safari.</p>",
+                    format!("{e:?}").replace('&', "&amp;").replace('<', "&lt;")
+                )),
             }
         }
     });
@@ -136,6 +155,7 @@ impl eframe::App for WebShell {
             self.app.status(msg);
         }
         self.app.logic(ctx);
+        bridge::poll_replies();
         // Store changed preferences straight away: a reload or closed tab runs no exit code (#2132).
         if let Some(json) = self.prefs.changed(&self.app) {
             match local_storage() {
@@ -249,7 +269,11 @@ fn services(inbox: Inbox, ctx: egui::Context, dirty: Rc<Cell<bool>>, saves: Asyn
         download: Some(Box::new(move |path: &str, bytes: &[u8]| download(&saves, &save_ctx, path, bytes))),
         print: Some(Box::new(print_pdf)),
         inbox: Some(inbox),
-        on_dirty: Some(Box::new(move |d| dirty.set(d))),
+        on_dirty: Some(Box::new(move |d| {
+            dirty.set(d);
+            bridge::dirty(d);
+        })),
+        save_to_page: Some(Box::new(bridge::save_to_page)),
         animations_enabled: Some(animations_enabled()),
         store_font: Some(Box::new(font_store::store)),
         forget_font: Some(Box::new(font_store::forget)),

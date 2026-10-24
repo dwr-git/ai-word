@@ -695,7 +695,7 @@ fn a_polish_interface_writes_new_documents_in_polish() {
     let ctx = egui::Context::default();
     let frame = |app: &mut crate::WordApp| ctx.run_ui(egui::RawInput::default(), |ui| app.logic(ui.ctx())).drop_without_applying_deltas();
     frame(&mut app);
-    assert_eq!(app.session.editing_lang, None, "English interface: WordCraft's default, US English");
+    assert_eq!(app.session.editing_lang, None, "English interface: AI-Word's default, US English");
     assert_eq!(app.session.doc.styles.default_chr.lang.as_deref(), Some("en-US"));
     app.run("ui.language", serde_json::json!({"value": "pl"})).unwrap();
     frame(&mut app);
@@ -1135,7 +1135,7 @@ fn the_languages_offered_are_the_embedded_ones_of_the_list() {
         return;
     }
     let listed: Vec<&str> = LANGUAGES.iter().map(|l| l.code).collect();
-    assert_eq!(all, listed, "every language WordCraft lists has its catalog in craft-i18n");
+    assert_eq!(all, listed, "every language AI-Word lists has its catalog in craft-i18n");
     assert!(Lang::from_code("pseudo").is_none(), "the pseudo locale is never a setting");
 }
 

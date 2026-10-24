@@ -1,0 +1,120 @@
+# Сборка AI-Word: готовая папка для сервера (zip).
+#
+# Запускается на каждое изменение ветки main и вручную (Actions → «Сборка» → Run workflow).
+# Результат:
+#   - Releases → «Сборка N — дата» (отдельный выпуск на каждую сборку, свежая отмечена Latest):
+#     ai-word-build-N-ГГГГ-ММ-ДД.zip; что нового — из studio/CHANGES.ru.md
+#   - Actions → запуск → Artifacts: тот же zip
+# Rust, trunk и всё остальное ставятся только здесь, на машине GitHub. На ваш сервер
+# попадают готовые файлы: index.html, js, сжатый wasm, шрифты, словарь, PHP помощника.
+name: Сборка
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: studio-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: AI-Word (браузер)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    env:
+      TRUNK_VERSION: 0.21.14
+      AI_WORD_BUILD: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Версия переводов интерфейса
+        id: i18n
+        run: echo "rev=$(tr -d ' \n' < craft-i18n.rev)" >> "$GITHUB_OUTPUT"
+
+      - name: Переводы интерфейса (storytold/craft-i18n)
+        uses: actions/checkout@v4
+        with:
+          repository: storytold/craft-i18n
+          ref: ${{ steps.i18n.outputs.rev }}
+          path: craft-i18n
+
+      - name: Шрифты-двойники и русский словарь
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-liberation fonts-crosextra-carlito fonts-crosextra-caladea hunspell-ru
+          mkdir -p "$RUNNER_TEMP/fonts" "$RUNNER_TEMP/dict"
+          # Liberation (метрики Times New Roman, Arial, Courier New), Carlito (Calibri), Caladea (Cambria).
+          for f in $(fc-list -f '%{file}\n' | grep -E '/(liberation|crosextra)/.*\.ttf$' | sort -u); do cp "$f" "$RUNNER_TEMP/fonts/"; done
+          cp /usr/share/doc/fonts-liberation/copyright "$RUNNER_TEMP/fonts/LICENSE-Liberation.txt"
+          cp /usr/share/doc/fonts-crosextra-carlito/copyright "$RUNNER_TEMP/fonts/LICENSE-Carlito.txt"
+          cp /usr/share/doc/fonts-crosextra-caladea/copyright "$RUNNER_TEMP/fonts/LICENSE-Caladea.txt"
+          ls -la "$RUNNER_TEMP/fonts"
+          test "$(ls "$RUNNER_TEMP"/fonts/*.ttf | wc -l)" -ge 12
+          cp /usr/share/hunspell/ru_RU.aff /usr/share/hunspell/ru_RU.dic "$RUNNER_TEMP/dict/"
+          awk '/dictionaries\/ru_RU/{f=1} f{print} f&&/^$/{exit}' /usr/share/doc/hunspell-ru/copyright > "$RUNNER_TEMP/dict/LICENSE-ru_RU.txt"
+          test -s "$RUNNER_TEMP/dict/LICENSE-ru_RU.txt"
+
+      - name: Rust для WebAssembly
+        uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Кэш сборки
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: studio-web
+          cache-on-failure: true
+
+      - name: Установить trunk
+        run: |
+          curl --proto '=https' -fsSL "https://github.com/trunk-rs/trunk/releases/download/v${TRUNK_VERSION}/trunk-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C "$HOME/.cargo/bin" trunk
+          trunk --version
+
+      - name: Проверить PHP помощника
+        run: for f in studio/api/*.php; do php -l "$f"; done
+
+      - name: Проверить JavaScript панели
+        run: for f in studio/web/*.js; do node --check "$f"; done
+
+      - name: Собрать сайт
+        run: |
+          export CRAFT_I18N_DIR="$(studio/build/i18n.sh "$GITHUB_WORKSPACE/craft-i18n" "$RUNNER_TEMP/i18n")"
+          export AI_WORD_FONTS_DIR="$RUNNER_TEMP/fonts"
+          export AI_WORD_DICT_DIR="$RUNNER_TEMP/dict"
+          studio/build/package.sh
+
+      - name: Сохранить zip в Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-word
+          path: dist/release/ai-word-build-*.zip
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Выложить в Releases (отдельная сборка с номером)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ZIP=$(ls dist/release/ai-word-build-*.zip)
+          DATE=$(TZ=Europe/Minsk date +%d.%m.%Y)
+          # Что нового: верхний раздел studio/CHANGES.ru.md (от первого «## » до следующего).
+          awk '/^## /{n++} n==1' studio/CHANGES.ru.md > notes.md
+          {
+            echo
+            echo "---"
+            echo "Скачайте zip ниже, распакуйте и положите папку ai-word на сервер вместо старой (имя папки можно менять)."
+            echo "Номер установленной сборки виден в шапке панели помощника. Инструкция: studio/README.ru.md"
+          } >> notes.md
+          # Повторный запуск той же сборки заменяет её выпуск.
+          gh release delete "build-${AI_WORD_BUILD}" --cleanup-tag --yes 2>/dev/null || true
+          gh release create "build-${AI_WORD_BUILD}" "$ZIP" \
+            --target "$GITHUB_SHA" \
+            --latest \
+            --title "Сборка ${AI_WORD_BUILD} — ${DATE}" \
+            --notes-file notes.md
