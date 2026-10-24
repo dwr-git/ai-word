@@ -18,11 +18,23 @@ pub enum Appearance {
     Dark,
     #[default]
     System,
+    /// AI-Word's Brand theme: navy chrome, the brand's blue-violet accent, solid black menus and
+    /// windows with a strong shadow, and the brand backdrop round the pages (which stay white).
+    /// Drawn as egui's dark theme with [`Tokens::brand`].
+    Brand,
+}
+
+/// Whether the Brand theme is the one installed as egui's dark palette ([`apply`]).
+static BRAND: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+/// The Brand theme is showing (its palette is egui's dark one).
+pub fn brand_on() -> bool {
+    BRAND.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 impl Appearance {
     /// In menu order.
-    pub const ALL: [Appearance; 3] = [Appearance::System, Appearance::Light, Appearance::Dark];
+    pub const ALL: [Appearance; 4] = [Appearance::Brand, Appearance::System, Appearance::Light, Appearance::Dark];
 
     /// The value used in `ui.json` and by the `ui.theme` command.
     pub fn code(self) -> &'static str {
@@ -30,6 +42,7 @@ impl Appearance {
             Appearance::Light => "light",
             Appearance::Dark => "dark",
             Appearance::System => "system",
+            Appearance::Brand => "brand",
         }
     }
 
@@ -43,6 +56,7 @@ impl Appearance {
             Appearance::Light => "Light",
             Appearance::Dark => "Dark",
             Appearance::System => "Use system setting",
+            Appearance::Brand => "Brand",
         }
     }
 
@@ -51,7 +65,7 @@ impl Appearance {
     pub fn is_dark(self, system: Option<egui::Theme>) -> bool {
         match self {
             Appearance::Light => false,
-            Appearance::Dark => true,
+            Appearance::Dark | Appearance::Brand => true,
             Appearance::System => system == Some(egui::Theme::Dark),
         }
     }
@@ -60,7 +74,7 @@ impl Appearance {
     pub fn preference(self) -> egui::ThemePreference {
         match self {
             Appearance::Light => egui::ThemePreference::Light,
-            Appearance::Dark => egui::ThemePreference::Dark,
+            Appearance::Dark | Appearance::Brand => egui::ThemePreference::Dark,
             Appearance::System => egui::ThemePreference::System,
         }
     }
@@ -434,8 +448,48 @@ impl Tokens {
             on_close: Color32::WHITE,
         }
     }
+    /// The Brand theme: the brand gradient's navy (#0a0a0f → #1a1a2e → #16213e) for the chrome,
+    /// the brand's blue-violet (#667eea) for the accent, solid black menus; pages stay white.
+    pub fn brand() -> Self {
+        let navy = |r, g, b| Color32::from_rgb(r, g, b);
+        Tokens {
+            dark: true,
+            title_bar: navy(0x0C, 0x0D, 0x17),
+            ribbon: navy(0x14, 0x15, 0x26),
+            tab_strip: navy(0x0C, 0x0D, 0x17),
+            canvas: BRAND_CANVAS,
+            panel: navy(0x16, 0x18, 0x2A),
+            border: navy(0x2A, 0x2D, 0x46),
+            border_strong: navy(0x3A, 0x3E, 0x5E),
+            text: Color32::WHITE,
+            text_dim: navy(0xB7, 0xBB, 0xD8),
+            text_disabled: navy(0x6B, 0x6F, 0x8F),
+            icon: navy(0xF3, 0xF4, 0xFF),
+            hover: navy(0x22, 0x25, 0x3E),
+            pressed: navy(0x2D, 0x31, 0x52),
+            checked: navy(0x2A, 0x30, 0x66),
+            accent: navy(0x66, 0x7E, 0xEA),
+            nav: navy(0x1B, 0x1E, 0x3A),
+            accent_text: navy(0xA9, 0xB4, 0xFF),
+            on_accent: navy(0x0B, 0x0D, 0x1F),
+            input: navy(0x1F, 0x22, 0x38),
+            input_border: navy(0x4A, 0x4F, 0x75),
+            group_label: navy(0x9A, 0x9F, 0xC2),
+            ruler: navy(0x2A, 0x2D, 0x46),
+            ruler_margin: navy(0x1A, 0x1C, 0x30),
+            ruler_tick: navy(0xB7, 0xBB, 0xD8),
+            status_bar: navy(0x0C, 0x0D, 0x17),
+            selection: Color32::from_rgba_unmultiplied(0x66, 0x7E, 0xEA, 0x55),
+            balloon: navy(0x1B, 0x1E, 0x3A),
+            markup_area: navy(0x12, 0x14, 0x24),
+            markup_edge: navy(0x2A, 0x2D, 0x46),
+            menu: Color32::BLACK,
+            ..Tokens::dark()
+        }
+    }
+
     pub fn get(ctx: &egui::Context) -> Tokens {
-        if ctx.global_style().visuals.dark_mode { Tokens::dark() } else { Tokens::light() }
+        if ctx.global_style().visuals.dark_mode { if brand_on() { Tokens::brand() } else { Tokens::dark() } } else { Tokens::light() }
     }
 }
 
@@ -743,8 +797,10 @@ fn tracked_job(text: &str, font: &FontId, tracking: f32, color: Color32) -> egui
 /// Setting a concrete theme for `System` would pin the native window too, and macOS then stops
 /// reporting appearance changes (#311).
 pub fn apply(ctx: &egui::Context, appearance: Appearance) {
+    let brand = appearance == Appearance::Brand;
+    BRAND.store(brand, std::sync::atomic::Ordering::Relaxed);
     ctx.set_visuals_of(egui::Theme::Light, visuals(&Tokens::light()));
-    ctx.set_visuals_of(egui::Theme::Dark, visuals(&Tokens::dark()));
+    ctx.set_visuals_of(egui::Theme::Dark, visuals(&if brand { Tokens::brand() } else { Tokens::dark() }));
     ctx.all_styles_mut(|s| {
         s.spacing.item_spacing = egui::vec2(6.0, 4.0);
         s.spacing.button_padding = egui::vec2(8.0, 3.0);
@@ -806,7 +862,121 @@ fn visuals(t: &Tokens) -> Visuals {
     v.widgets.open.weak_bg_fill = t.pressed;
     v.popup_shadow = egui::Shadow { offset: [0, 4], blur: 16, spread: 0, color: Color32::from_black_alpha(if t.dark { 120 } else { 40 }) };
     v.window_shadow = egui::Shadow { offset: [0, 8], blur: 28, spread: 0, color: Color32::from_black_alpha(if t.dark { 140 } else { 50 }) };
+    if t.canvas == BRAND_CANVAS {
+        // Brand: menus, popups and windows are solid black blocks with a strong black shadow.
+        v.window_fill = Color32::BLACK;
+        v.window_stroke = Stroke::new(1.0, Color32::from_rgb(0x26, 0x28, 0x3C));
+        v.popup_shadow = egui::Shadow { offset: [0, 8], blur: 32, spread: 0, color: Color32::BLACK };
+        v.window_shadow = egui::Shadow { offset: [0, 10], blur: 36, spread: 2, color: Color32::BLACK };
+    }
     v
+}
+
+/// The colour the Brand backdrop reads as, the document area's colour in the Brand theme.
+pub const BRAND_CANVAS: Color32 = Color32::from_rgb(0x16, 0x18, 0x2C);
+
+/// The Brand theme's canvas backdrop, as the owner's page draws it in CSS: the brand gradient
+/// (#0a0a0f → #1a1a2e → #16213e at 135°), three soft glows (circles at 20% 80%, 80% 20% and 40% 40%,
+/// fading out halfway to the farthest corner), a 30 px grid of 5% white lines, and an inner shadow
+/// (`inset 0 0 35px 10px #00000099`) round the edges.
+pub fn paint_brand_backdrop(painter: &egui::Painter, rect: egui::Rect) {
+    use egui::epaint::{Mesh, Vertex, WHITE_UV};
+    let vertex = |pos: egui::Pos2, color: Color32| Vertex { pos, uv: WHITE_UV, color };
+    let quad = |m: &mut Mesh, corners: [(egui::Pos2, Color32); 4]| {
+        let base = m.vertices.len() as u32;
+        m.vertices.extend(corners.iter().map(|(p, c)| vertex(*p, *c)));
+        m.indices.extend([base, base + 1, base + 2, base, base + 2, base + 3]);
+    };
+    // The gradient: at 135° the top-left corner is the first stop, the bottom-right the last, and
+    // the other two corners sit on the middle stop.
+    let (a, mid, b) = (Color32::from_rgb(0x0A, 0x0A, 0x0F), Color32::from_rgb(0x1A, 0x1A, 0x2E), Color32::from_rgb(0x16, 0x21, 0x3E));
+    let mut m = Mesh::default();
+    quad(&mut m, [(rect.left_top(), a), (rect.right_top(), mid), (rect.right_bottom(), b), (rect.left_bottom(), mid)]);
+    painter.add(egui::Shape::mesh(m));
+    // The glows: a fan from the centre colour out to transparent at half the farthest-corner distance.
+    for (fx, fy, rgb, alpha) in [(0.2_f32, 0.8_f32, (120, 119, 198), 0.30_f32), (0.8, 0.2, (255, 119, 198), 0.30), (0.4, 0.4, (120, 219, 255), 0.20)]
+    {
+        let c = rect.min + egui::vec2(rect.width() * fx, rect.height() * fy);
+        let far = egui::vec2(rect.width() * fx.max(1.0 - fx), rect.height() * fy.max(1.0 - fy)).length();
+        let reach = far * 0.5;
+        let inner = Color32::from_rgba_unmultiplied(rgb.0, rgb.1, rgb.2, (alpha * 255.0) as u8);
+        let mut g = Mesh::default();
+        g.vertices.push(vertex(c, inner));
+        const STEPS: u32 = 64;
+        for i in 0..=STEPS {
+            let angle = std::f32::consts::TAU * i as f32 / STEPS as f32;
+            g.vertices.push(vertex(c + egui::vec2(angle.cos(), angle.sin()) * reach, Color32::TRANSPARENT));
+        }
+        for i in 1..=STEPS {
+            g.indices.extend([0, i, i + 1]);
+        }
+        painter.add(egui::Shape::mesh(g));
+    }
+    // The grid: lines 30 points apart from the top-left corner.
+    let line = Stroke::new(1.0, Color32::from_rgba_unmultiplied(255, 255, 255, 13));
+    let mut x = rect.left() + 0.5;
+    while x < rect.right() {
+        painter.vline(x, rect.y_range(), line);
+        x += 30.0;
+    }
+    let mut y = rect.top() + 0.5;
+    while y < rect.bottom() {
+        painter.hline(rect.x_range(), y, line);
+        y += 30.0;
+    }
+    // The inner shadow: solid for the 10 px spread, then fading over the 35 px blur.
+    let dark = |a: f32| Color32::from_rgba_unmultiplied(0, 0, 0, (a * 153.0) as u8);
+    let mut sh = Mesh::default();
+    for (from, to, a0, a1) in [(0.0_f32, 10.0_f32, 1.0_f32, 0.75_f32), (10.0, 45.0, 0.75, 0.0)] {
+        let (r, i0, i1) = (rect, from, to);
+        // top, bottom, left, right bands
+        quad(
+            &mut sh,
+            [
+                (egui::pos2(r.left(), r.top() + i0), dark(a0)),
+                (egui::pos2(r.right(), r.top() + i0), dark(a0)),
+                (egui::pos2(r.right(), r.top() + i1), dark(a1)),
+                (egui::pos2(r.left(), r.top() + i1), dark(a1)),
+            ],
+        );
+        quad(
+            &mut sh,
+            [
+                (egui::pos2(r.left(), r.bottom() - i1), dark(a1)),
+                (egui::pos2(r.right(), r.bottom() - i1), dark(a1)),
+                (egui::pos2(r.right(), r.bottom() - i0), dark(a0)),
+                (egui::pos2(r.left(), r.bottom() - i0), dark(a0)),
+            ],
+        );
+        quad(
+            &mut sh,
+            [
+                (egui::pos2(r.left() + i0, r.top()), dark(a0)),
+                (egui::pos2(r.left() + i1, r.top()), dark(a1)),
+                (egui::pos2(r.left() + i1, r.bottom()), dark(a1)),
+                (egui::pos2(r.left() + i0, r.bottom()), dark(a0)),
+            ],
+        );
+        quad(
+            &mut sh,
+            [
+                (egui::pos2(r.right() - i1, r.top()), dark(a1)),
+                (egui::pos2(r.right() - i0, r.top()), dark(a0)),
+                (egui::pos2(r.right() - i0, r.bottom()), dark(a0)),
+                (egui::pos2(r.right() - i1, r.bottom()), dark(a1)),
+            ],
+        );
+    }
+    painter.add(egui::Shape::mesh(sh));
+}
+
+/// The area round the pages: the brand backdrop in the Brand theme, else `fill`.
+pub fn paint_canvas_fill(painter: &egui::Painter, rect: egui::Rect, fill: Color32) {
+    if fill == BRAND_CANVAS {
+        paint_brand_backdrop(painter, rect);
+    } else {
+        painter.rect_filled(rect, 0.0, fill);
+    }
 }
 
 pub fn c32(c: wordcraft_doc::Rgb) -> Color32 {

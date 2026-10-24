@@ -1329,6 +1329,12 @@ pub fn paint(p: &Painter, r: Rect, name: &str, c: Color32, accent: Color32) {
         }
 
         // The built-in file browser (#576): a folder, a file and the home folder.
+        // Home (the site the web editor lives on): a house with a door.
+        "house" => {
+            pen.closed(&[(3.0, 9.5), (10.0, 3.0), (17.0, 9.5)], c);
+            pen.closed(&[(5.0, 8.0), (5.0, 17.0), (15.0, 17.0), (15.0, 8.0)], c);
+            pen.frect(8.5, 11.5, 11.5, 17.0, a);
+        }
         "folder" => {
             pen.frect(2.5, 4.5, 8.5, 7.0, yellow);
             pen.frect(2.5, 6.5, 17.5, 16.0, yellow);

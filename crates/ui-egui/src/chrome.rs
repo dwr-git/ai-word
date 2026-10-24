@@ -301,6 +301,22 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
             let mut right_start = full.max.x;
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing = vec2(2.0, 0.0);
+                // Web: the way back to the site the editor lives on, first in the bar.
+                if app.services.go_home.is_some() {
+                    let (r, resp) = ui.allocate_exact_size(vec2(control_h + 4.0, control_h), Sense::click());
+                    let resp = resp.on_hover_text(tl!("To the site")).on_hover_cursor(egui::CursorIcon::PointingHand);
+                    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("To the site")));
+                    if resp.hovered() {
+                        ui.painter().rect_filled(r, 6.0, t.accent.gamma_multiply(0.22));
+                    }
+                    icons::paint(ui.painter(), Rect::from_center_size(r.center(), vec2(18.0, 18.0)), "house", t.text, t.accent);
+                    if resp.clicked()
+                        && let Some(go) = app.services.go_home.as_ref()
+                    {
+                        go();
+                    }
+                    ui.add_space(8.0);
+                }
                 // AutoSave switch: greyed out, with the reason as its tooltip, when AutoSave can't
                 // cover the document (#196, #176); clicking it then offers Save As where that helps.
                 let block = app.autosave_block();

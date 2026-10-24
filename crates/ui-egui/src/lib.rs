@@ -128,6 +128,9 @@ pub struct Services {
     /// the document's path, the bytes, whether a name was given — Save As). `Ok(true)` when the
     /// page took it; `Ok(false)` downloads as usual. The page reports a failed upload itself.
     pub save_to_page: Option<Box<dyn Fn(&str, Option<&str>, &[u8], bool) -> Result<bool, String>>>,
+    /// Web (AI-Word): leave the editor for the site it lives on (`STUDIO_CONFIG.homeUrl`). The
+    /// title bar shows a house for it when set.
+    pub go_home: Option<Box<dyn Fn()>>,
     /// Web: saves that `download` started and that finish later (the browser's save picker,
     /// #1315). The hook starts a ticket for such a save and reports how it ended; until then the
     /// document's save isn't confirmed, and a New/Open held back by the Save Changes prompt waits.
@@ -1677,7 +1680,7 @@ impl WordApp {
                 if let Some(v) = s("value") {
                     match theme::Appearance::from_code(v) {
                         Some(a) => self.ui.theme = a,
-                        None => return Some(Err(format!("unknown theme {v:?}; use light, dark or system"))),
+                        None => return Some(Err(format!("unknown theme {v:?}; use brand, light, dark or system"))),
                     }
                 }
                 json!({"theme": self.ui.theme.code(), "dark": self.ui_is_dark()})
@@ -2464,7 +2467,7 @@ impl WordApp {
             chrome::title_bar(self, ui);
             ribbon::show(self, ui);
             chrome::status_bar(self, ui);
-            egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.canvas)).show(ui, |_| {});
+            egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| theme::paint_canvas_fill(ui.painter(), ui.max_rect(), t.canvas));
         } else {
             let screen = chrome::Screen::of(&self.session.view);
             // Focus and Full Screen (#1678) take the whole screen, with only their slim bar.
@@ -2478,7 +2481,8 @@ impl WordApp {
                 panes::show(self, ui);
             }
             let fill = if screen == chrome::Screen::Focus { chrome::FOCUS_CANVAS } else { t.canvas };
-            egui::CentralPanel::default().frame(egui::Frame::NONE.fill(fill)).show(ui, |ui| {
+            egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| {
+                theme::paint_canvas_fill(ui.painter(), ui.max_rect(), fill);
                 canvas::show(self, ui);
             });
             if self.focus_ribbon {

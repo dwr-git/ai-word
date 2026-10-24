@@ -77,13 +77,18 @@ pub fn start() {
                     let stored = stored_prefs();
                     crate::prefs::restore(&mut app, stored.as_deref());
                     // AI-Word's first start: the Russian interface, Russian as the documents'
-                    // language, the light theme Word users know, and no community links.
+                    // language, the Brand theme (Light, Dark and System stay in File › Options), and no community links.
                     if stored.is_none() {
                         let _ = app.run("ui.language", serde_json::json!({"value": "ru"}));
                         app.session.prefs.default_language = Some("ru-RU".into());
                         // Russian documents: A4, centimetres, a decimal comma.
                         app.session.prefs.region = Some("ru-RU".into());
-                        app.ui.theme = wordcraft_ui_egui::theme::Appearance::Light;
+                        app.ui.theme = wordcraft_ui_egui::theme::Appearance::Brand;
+                    }
+                    // The Brand theme arrived in build 3: visitors of earlier builds get it once too
+                    // (a theme chosen after that stays).
+                    if once("ai-word-brand-theme") {
+                        app.ui.theme = wordcraft_ui_egui::theme::Appearance::Brand;
                     }
                     app.ui.show_discord = false;
                     // A region chosen in File › Options replaces the browser's for the first blank
@@ -276,6 +281,8 @@ fn services(inbox: Inbox, ctx: egui::Context, dirty: Rc<Cell<bool>>, saves: Asyn
             bridge::dirty(d);
         })),
         save_to_page: Some(Box::new(bridge::save_to_page)),
+        // The title bar's way back to the site (studio/config.js: homeUrl).
+        go_home: Some(Box::new(go_home)),
         animations_enabled: Some(animations_enabled()),
         store_font: Some(Box::new(font_store::store)),
         forget_font: Some(Box::new(font_store::forget)),
@@ -645,5 +652,31 @@ fn mime_for(name: &str) -> &'static str {
         Some("json") => "application/json",
         Some("xml") => "application/xml",
         _ => "application/octet-stream",
+    }
+}
+
+/// Leave the editor for the site it lives on: `window.STUDIO_CONFIG.homeUrl` (studio/config.js,
+/// made absolute by the panel), one level up without it.
+fn go_home() {
+    let Some(window) = web_sys::window() else { return };
+    let url = js_sys::Reflect::get(&window, &"STUDIO_CONFIG".into())
+        .ok()
+        .filter(|c| c.is_object())
+        .and_then(|c| js_sys::Reflect::get(&c, &"homeUrl".into()).ok())
+        .and_then(|u| u.as_string())
+        .filter(|u| !u.trim().is_empty())
+        .unwrap_or_else(|| "../".to_string());
+    if let Err(e) = window.location().set_href(&url) {
+        log::error!("couldn't go to {url}: {e:?}");
+    }
+}
+
+/// True the first time `key` is asked about in this browser (remembered in localStorage); false
+/// when storage is unavailable, so a blocked storage never resets a choice on every visit.
+fn once(key: &str) -> bool {
+    let Some(storage) = web_sys::window().and_then(|w| w.local_storage().ok().flatten()) else { return false };
+    match storage.get_item(key) {
+        Ok(None) => storage.set_item(key, "1").is_ok(),
+        _ => false,
     }
 }

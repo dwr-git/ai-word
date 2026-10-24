@@ -1218,11 +1218,12 @@
   })();
 
   // ------------------------------------------------------------------ тема
-  // Тема редактора: светлая (как Word), тёмная или как в системе. Панель — в тон.
-  const THEMES = [['light', 'Светлая'], ['dark', 'Тёмная'], ['system', 'Как в системе']];
+  // Тема редактора: фирменная (по умолчанию), светлая (как Word), тёмная или как в системе. Панель — в тон.
+  const THEMES = [['brand', 'Фирменная'], ['light', 'Светлая'], ['dark', 'Тёмная'], ['system', 'Как в системе']];
   const systemDark = () => !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   function applyPanelTheme(themeId) {
-    root.dataset.theme = themeId === 'dark' || (themeId === 'system' && systemDark()) ? 'dark' : 'light';
+    root.dataset.theme = themeId === 'brand' ? 'brand' : (themeId === 'dark' || (themeId === 'system' && systemDark()) ? 'dark' : 'light');
+    document.documentElement.classList.toggle('studio-brand', themeId === 'brand');
     renderThemeMenu(themeId);
   }
   const syncBackdrop = () => {};
@@ -1315,7 +1316,7 @@
     });
     setMode(mode);
     setEye(attachScreen);
-    applyPanelTheme('light');
+    applyPanelTheme('brand');
     showEmpty();
     status();
   }
