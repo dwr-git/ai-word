@@ -301,22 +301,6 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
             let mut right_start = full.max.x;
             ui.horizontal_centered(|ui| {
                 ui.spacing_mut().item_spacing = vec2(2.0, 0.0);
-                // Web: the way back to the site the editor lives on, first in the bar.
-                if app.services.go_home.is_some() {
-                    let (r, resp) = ui.allocate_exact_size(vec2(control_h + 4.0, control_h), Sense::click());
-                    let resp = resp.on_hover_text(tl!("To the site")).on_hover_cursor(egui::CursorIcon::PointingHand);
-                    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("To the site")));
-                    if resp.hovered() {
-                        ui.painter().rect_filled(r, 6.0, t.accent.gamma_multiply(0.22));
-                    }
-                    icons::paint(ui.painter(), Rect::from_center_size(r.center(), vec2(18.0, 18.0)), "house", t.text, t.accent);
-                    if resp.clicked()
-                        && let Some(go) = app.services.go_home.as_ref()
-                    {
-                        go();
-                    }
-                    ui.add_space(8.0);
-                }
                 // AutoSave switch: greyed out, with the reason as its tooltip, when AutoSave can't
                 // cover the document (#196, #176); clicking it then offers Save As where that helps.
                 let block = app.autosave_block();
@@ -360,14 +344,30 @@ pub fn title_bar(app: &mut WordApp, ui: &mut Ui) {
                 }
                 qat_end = ui.min_rect().max.x;
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    // Account / community.
-                    let (r, resp) = ui.allocate_exact_size(vec2(control_h, control_h), Sense::click());
-                    ui.painter().circle_filled(r.center(), control_h / 2.0 - 1.0, t.accent);
-                    resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("Account")));
-                    let initials: String = app.session.user_initials().chars().take(2).collect();
-                    ui.painter().text(r.center(), Align2::CENTER_CENTER, initials, semibold(10.5), t.on_accent);
-                    if resp.on_hover_text(format!("{} — set your name in File › Options", app.session.author)).clicked() {
-                        let _ = app.run("ui.backstage", json!({"value": true, "page": "options", "pane": "general"}));
+                    // Web: the way back to the site the editor lives on, at the right end, where
+                    // the desktop app shows the account (its name is in File › Options).
+                    if app.services.go_home.is_some() {
+                        let (r, resp) = ui.allocate_exact_size(vec2(control_h + 6.0, control_h), Sense::click());
+                        let resp = resp.on_hover_text(tl!("To the site")).on_hover_cursor(egui::CursorIcon::PointingHand);
+                        resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("To the site")));
+                        let fill = if resp.hovered() { t.accent_text } else { t.accent };
+                        ui.painter().rect_filled(r, 7.0, fill);
+                        icons::paint(ui.painter(), Rect::from_center_size(r.center(), vec2(17.0, 17.0)), "house", t.on_accent, t.on_accent);
+                        if resp.clicked()
+                            && let Some(go) = app.services.go_home.as_ref()
+                        {
+                            go();
+                        }
+                    } else {
+                        // Account / community.
+                        let (r, resp) = ui.allocate_exact_size(vec2(control_h, control_h), Sense::click());
+                        ui.painter().circle_filled(r.center(), control_h / 2.0 - 1.0, t.accent);
+                        resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("Account")));
+                        let initials: String = app.session.user_initials().chars().take(2).collect();
+                        ui.painter().text(r.center(), Align2::CENTER_CENTER, initials, semibold(10.5), t.on_accent);
+                        if resp.on_hover_text(format!("{} — set your name in File › Options", app.session.author)).clicked() {
+                            let _ = app.run("ui.backstage", json!({"value": true, "page": "options", "pane": "general"}));
+                        }
                     }
                     ui.add_space(8.0);
                     if app.ui.show_discord {
