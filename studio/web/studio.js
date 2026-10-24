@@ -24,6 +24,13 @@
     filesOnStart: true,
     gost: { font: 'Times New Roman', size: 14, lineSpacing: 1.5, indentCm: 1.25, marginsMm: { left: 30, right: 15, top: 20, bottom: 20 }, pageNumbers: 'bottom-center' },
   }, window.STUDIO_CONFIG || {});
+  // Страница сборки лежит в b/<номер>/ (studio/build/versioned.sh); адреса из настроек — от папки приложения.
+  const fromRoot = (p) => { try { return new URL(p, window.STUDIO_ROOT || document.baseURI).href; } catch { return p; } };
+  CFG.api = fromRoot(CFG.api);
+  CFG.files = CFG.files ? fromRoot(CFG.files) : CFG.files;
+  CFG.homeUrl = fromRoot(CFG.homeUrl || '../');
+  // Редактор сам читает адрес домика из настроек.
+  window.STUDIO_CONFIG = Object.assign(window.STUDIO_CONFIG || {}, { homeUrl: CFG.homeUrl });
 
   const READ_TOOLS = new Set(['find_commands', 'get_state', 'read_document', 'paragraph_details', 'look_at_screen']);
   // Никогда: файлы (их делает панель), служебное и интерфейс, печать, макросы, внешние сервисы.
