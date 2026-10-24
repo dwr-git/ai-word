@@ -81,6 +81,8 @@ pub fn start() {
                     if stored.is_none() {
                         let _ = app.run("ui.language", serde_json::json!({"value": "ru"}));
                         app.session.prefs.default_language = Some("ru-RU".into());
+                        // Russian documents: A4, centimetres, a decimal comma.
+                        app.session.prefs.region = Some("ru-RU".into());
                         app.ui.theme = wordcraft_ui_egui::theme::Appearance::Light;
                     }
                     app.ui.show_discord = false;

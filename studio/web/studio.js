@@ -853,6 +853,11 @@
   });
 
   // ------------------------------------------------------------------ файлы на сервере
+  // Новый пустой документ — и сразу к нему (закрыть «Файл › Главная»).
+  async function newDocument() {
+    await PC.exec('file.new');
+    await PC.call('ui.backstage', { value: false }).catch(() => {});
+  }
   const fmtSize = (n) => (n < 1024 ? n + ' Б' : n < 1048576 ? Math.round(n / 1024) + ' КБ' : (n / 1048576).toFixed(1).replace('.', ',') + ' МБ');
   const fmtDate = (t) => {
     if (!t) return '';
@@ -969,6 +974,7 @@
         VC().open(name, bytes);
         server = name;
         show(false);
+        PC.call('ui.backstage', { value: false }).catch(() => {});
       } catch (e) { toast('Не удалось открыть: ' + e.message, true); }
     }
     async function upload(name, bytes, overwrite) {
@@ -1078,7 +1084,7 @@
       $('files').addEventListener('pointerdown', (e) => { if (e.target === $('files')) show(false); });
       $('files').addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('ask').hidden) { e.preventDefault(); show(false); } });
       $('filesSearch').addEventListener('input', render);
-      $('filesNew').onclick = async () => { try { await PC.exec('file.new'); server = null; show(false); } catch (e) { toast(e.message, true); } };
+      $('filesNew').onclick = async () => { try { await newDocument(); server = null; show(false); } catch (e) { toast(e.message, true); } };
       $('filesUpload').onclick = pickLocal;
       $('filesSave').onclick = () => save(false);
       $('filesSaveAs').onclick = () => save(true);
@@ -1162,7 +1168,7 @@
       ['Сохранить на сервер', 'Ctrl+S', async () => { await Files.save(false); }],
       ['Сохранить как…', 'Под другим именем в «Моих файлах»', async () => { await Files.save(true); }],
       ['Скачать PDF', 'Как будет напечатано', async () => { await needDoc(); await PC.exec('file.exportPdf'); }],
-      ['Новый документ', 'Пустой лист', async () => { await PC.exec('file.new'); Files.forget(); }],
+      ['Новый документ', 'Пустой лист', async () => { await newDocument(); Files.forget(); }],
     ]],
     ['Попросить помощника', [
       ['Проверить по методичке', 'Найти отступы, интервалы и шрифты не по ГОСТ и исправить', '!Проверь оформление документа по ГОСТ (поля, шрифт, кегль, интервалы, отступы, выравнивание, заголовки) и исправь всё, что не так. Перечисли, что поправил.'],
@@ -1241,7 +1247,13 @@
   async function watchTheme() {
     for (;;) {
       if (!document.hidden && PC.ready()) {
-        try { const ui = await PC.call('ui.inspect'); const id = ui && ui.ui && ui.ui.theme; if (typeof id === 'string') applyPanelTheme(id.toLowerCase()); } catch { /* не важно */ }
+        try {
+          const ui = await PC.call('ui.inspect');
+          const id = ui && ui.ui && ui.ui.theme;
+          if (typeof id === 'string') applyPanelTheme(id.toLowerCase());
+          // Заголовок вкладки браузера — имя документа (окно браузера редактор сам не переименует).
+          if (ui && typeof ui.title === 'string') document.title = ui.title ? `${ui.title}${ui.dirty ? ' •' : ''} — AI-Word` : 'AI-Word';
+        } catch { /* не важно */ }
       }
       await sleep(2000);
     }
