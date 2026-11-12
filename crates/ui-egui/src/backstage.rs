@@ -122,7 +122,7 @@ pub fn show(app: &mut WordApp, ui: &mut Ui) {
                 }
             }
             ui.with_layout(egui::Layout::bottom_up(egui::Align::Min), |ui| {
-                // AI-Word works offline: no community link out of the page.
+                // AI Текст works offline: no community link out of the page.
                 let label = "About";
                 let (r, resp) = ui.allocate_exact_size(vec2(200.0, 32.0), Sense::click());
                 resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, ui.is_enabled(), tl!(label)));
@@ -576,8 +576,8 @@ fn open_page(app: &mut WordApp, ui: &mut Ui) {
     // doesn't show up, WordCraft's own browser is always one click away.
     #[cfg(all(unix, not(target_os = "macos"), not(target_arch = "wasm32")))]
     if ui
-        .button(egui::RichText::new(tl!("Browse in AI-Word…")).font(medium(14.0)))
-        .on_hover_text(tl!("Open a file with AI-Word's own browser when the system file dialog doesn't appear."))
+        .button(egui::RichText::new(tl!("Browse in AI Текст…")).font(medium(14.0)))
+        .on_hover_text(tl!("Open a file with AI Текст's own browser when the system file dialog doesn't appear."))
         .clicked()
     {
         let _ = app.run("ui.fileBrowser", json!({}));

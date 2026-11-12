@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Russian names for the assistant's command search.
 
-Reads the Russian interface catalogs AI-Word is built with (`$CRAFT_I18N_DIR/locales/ru/common.tsv`
+Reads the Russian interface catalogs AI Текст is built with (`$CRAFT_I18N_DIR/locales/ru/common.tsv`
 and `wordcraft.tsv`, after studio/build/i18n.sh renamed the app) and writes studio/ru-labels.json:
 
     {"text": {"Line Spacing": "Междустрочный интервал", ...}, "id": {"para.single": "…", ...}}

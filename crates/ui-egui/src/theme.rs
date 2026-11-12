@@ -18,7 +18,7 @@ pub enum Appearance {
     Dark,
     #[default]
     System,
-    /// AI-Word's Brand theme: navy chrome, the brand's blue-violet accent, solid black menus and
+    /// AI Текст's Brand theme: navy chrome, the brand's blue-violet accent, solid black menus and
     /// windows with a strong shadow, and the brand backdrop round the pages (which stay white).
     /// Drawn as egui's dark theme with [`Tokens::brand`].
     Brand,

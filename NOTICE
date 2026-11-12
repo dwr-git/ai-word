@@ -1,10 +1,10 @@
-AI-Word (based on WordCraft)
+AI Текст (based on WordCraft)
 WordCraft
 Copyright (c) 2026 ArtCraft Team and the WordCraft contributors.
 Licensed under the MIT License or the Apache License, Version 2.0, at your option
 (LICENSE-MIT, LICENSE-APACHE).
 
-AI-Word is a modified version of WordCraft by the ArtCraft team (https://github.com/storytold/wordcraft),
+AI Текст is a modified version of WordCraft by the ArtCraft team (https://github.com/storytold/wordcraft),
 under the same license. It is not an ArtCraft product and carries none of the ArtCraft marks.
 
 Third-party material
@@ -107,7 +107,7 @@ cleanup. WordCraft enables only writing; PDF import and its image decoders are n
 
 No Microsoft, Adobe, Avid or Autodesk icons, images, templates or artwork are included.
 
-AI-Word packages (built by .github/workflows/studio.yml) also contain:
+AI Текст packages (built by .github/workflows/studio.yml) also contain:
 
 - Liberation Serif, Sans and Mono (fonts/) — SIL Open Font License 1.1; fonts/LICENSE-Liberation.txt.
 - Carlito (fonts/) — SIL Open Font License 1.1; fonts/LICENSE-Carlito.txt.

@@ -1467,8 +1467,8 @@ pub fn show(app: &mut WordApp, ctx: &egui::Context) {
         Dialog::Refs(d) => d.title(),
         Dialog::Icons { .. } => "Icons",
         Dialog::PasteSpecial { .. } => "Paste Special",
-        Dialog::About { .. } => "About AI-Word",
-        Dialog::SaveChanges { .. } => "AI-Word",
+        Dialog::About { .. } => "About AI Текст",
+        Dialog::SaveChanges { .. } => "AI Текст",
         Dialog::DiscardRecovery { .. } => "Discard recovery copy",
         Dialog::RecipientList { .. } => "Recipient List",
         Dialog::SelectTable { .. } => "Select Table",
@@ -2718,18 +2718,19 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                 1 => crate::credits::contributors_ui(ui),
                 2 => crate::credits::models_ui(ui),
                 _ => {
-                    ui.label(egui::RichText::new(tl!("AI-Word")).font(semibold(22.0)));
+                    ui.label(egui::RichText::new(tl!("AI Текст")).font(semibold(22.0)));
                     let build = option_env!("WORDCRAFT_BUILD_SHA").map(|s| s.get(..8).unwrap_or(s)).unwrap_or(tl!("development build"));
                     ui.label(crate::i18n::fmt(tl!("Version {version} ({build})"), &[("version", env!("CARGO_PKG_VERSION")), ("build", build)]));
                     ui.label(tl!(
                         "A free, open-source word processor written from scratch in Rust.\nPart of the Crafting Apps from the ArtCraft team."
                     ));
                     ui.add_space(6.0);
-                    // AI-Word works offline: no links out of the page.
+                    // AI Текст works offline: no links out of the page.
                     ui.label(tl!("Based on WordCraft by the ArtCraft team (github.com/storytold/wordcraft)."));
+                    ui.label(tl!("Word is a trademark of Microsoft Corporation. AI Текст is not affiliated with Microsoft and works with files in its formats."));
                     ui.add_space(6.0);
                     ui.label(
-                        egui::RichText::new(tl!("MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team and the AI-Word contributors.")).small().weak(),
+                        egui::RichText::new(tl!("MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team and the AI Текст contributors.")).small().weak(),
                     );
                 }
             }
@@ -2884,7 +2885,7 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             });
             ui.label(
                 egui::RichText::new(tl!(
-                    "Keep the password somewhere safe: without it nobody, AI-Word included, can open the document. Leave both boxes empty to remove the password."
+                    "Keep the password somewhere safe: without it nobody, AI Текст included, can open the document. Leave both boxes empty to remove the password."
                 ))
                 .small()
                 .weak(),

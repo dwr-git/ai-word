@@ -1,5 +1,5 @@
 <?php
-// studio/api/files.php — файлы AI-Word на вашем сервере. У каждого пользователя своя папка.
+// studio/api/files.php — файлы AI Текст на вашем сервере. У каждого пользователя своя папка.
 //
 //   GET  files.php                          → {ok, user, files: [{name, size, modified}], limit}
 //   GET  files.php?action=load&name=…       → сам документ (.docx, .doc, .odt, .rtf…), application/octet-stream
@@ -11,7 +11,7 @@
 //
 // Шрифты организации: папка fonts рядом с папками пользователей (storage/ai-word/fonts). Положите
 // туда шрифты, на которые у организации есть лицензия (например, Times New Roman, Arial, Calibri из
-// Windows): AI-Word будет верстать ими у всех пользователей, и документы совпадут с Word один в один.
+// Windows): AI Текст будет верстать ими у всех пользователей, и документы совпадут с Word один в один.
 //
 // Где лежат файлы: AI_WORD_DATA_DIR из .env, иначе storage/ai-word рядом с корнем сайта
 // (/app/storage/ai-word при корне /app/src — вне корня, nginx её не отдаёт; создаётся сама),
@@ -134,7 +134,7 @@ function fonts_dir(string $root): string
         @mkdir($dir, 0770, true);
         @file_put_contents("$dir/README.txt", "Положите сюда шрифты, на которые у организации есть лицензия (.ttf, .otf),\n"
             . "например Times New Roman, Arial, Calibri из папки C:\\Windows\\Fonts.\n"
-            . "AI-Word загрузит их у всех пользователей, и документы будут свёрстаны теми же шрифтами, что в Word.\n");
+            . "AI Текст загрузит их у всех пользователей, и документы будут свёрстаны теми же шрифтами, что в Word.\n");
     }
     return $dir;
 }

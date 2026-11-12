@@ -1,6 +1,7 @@
-# Rows AI-Word adds to craft-i18n's Russian WordCraft catalog (appended at build time, after
-# "WordCraft" is renamed to "AI-Word" in it). Same format as the catalog: context, English, Russian.
+# Rows AI Текст adds to craft-i18n's Russian WordCraft catalog (appended at build time, after
+# "WordCraft" is renamed to "AI Текст" in it). Same format as the catalog: context, English, Russian.
 	Based on WordCraft by the ArtCraft team (github.com/storytold/wordcraft).	Основан на WordCraft от команды ArtCraft (github.com/storytold/wordcraft).
+	Word is a trademark of Microsoft Corporation. AI Текст is not affiliated with Microsoft and works with files in its formats.	Word — товарный знак корпорации Microsoft. AI Текст не связан с Microsoft и работает с файлами в её форматах.
 	Couldn't save {name}: {error}	Не удалось сохранить {name}: {error}
 	Brand	Фирменная
 	To the site	На сайт

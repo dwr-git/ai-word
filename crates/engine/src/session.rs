@@ -697,7 +697,7 @@ impl Session {
             goal_x: None,
             page_hint: 0,
             registry,
-            author: "AI-Word User".into(),
+            author: "AI Текст User".into(),
             initials: String::new(),
             painter: None,
             status: String::new(),

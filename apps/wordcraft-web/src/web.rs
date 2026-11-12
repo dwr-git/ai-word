@@ -76,7 +76,7 @@ pub fn start() {
                     // Preferences from an earlier visit (#2132), as the desktop app reads `ui.json`.
                     let stored = stored_prefs();
                     crate::prefs::restore(&mut app, stored.as_deref());
-                    // AI-Word's first start: the Russian interface, Russian as the documents'
+                    // AI Текст's first start: the Russian interface, Russian as the documents'
                     // language, the Brand theme (Light, Dark and System stay in File › Options), and no community links.
                     if stored.is_none() {
                         let _ = app.run("ui.language", serde_json::json!({"value": "ru"}));
@@ -110,7 +110,7 @@ pub fn start() {
             match result {
                 Ok(()) => el.remove(),
                 Err(e) => el.set_inner_html(&format!(
-                    "<p>AI-Word не запустился: {}</p><p>Нужен браузер с WebGPU или WebGL2: свежий Chrome, Edge, Firefox или Safari.</p>",
+                    "<p>AI Текст не запустился: {}</p><p>Нужен браузер с WebGPU или WebGL2: свежий Chrome, Edge, Firefox или Safari.</p>",
                     format!("{e:?}").replace('&', "&amp;").replace('<', "&lt;")
                 )),
             }
@@ -429,7 +429,7 @@ fn download(saves: &AsyncSaves, ctx: &egui::Context, path: &str, bytes: &[u8]) -
     let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "document".into());
     let window = web_sys::window().ok_or("no window")?;
 
-    // AI-Word: a copy for the computer is an ordinary download (into Downloads), the same in every
+    // AI Текст: a copy for the computer is an ordinary download (into Downloads), the same in every
     // browser; the document itself lives in «Мои документы» on the server. The browser's own
     // Save As window (showSaveFilePicker) confused people with its file type list, and an export
     // clicked in the editor often lacked the user gesture it needs. `?picker` brings it back.

@@ -1,4 +1,4 @@
-/* AI-Word — помощник и файлы на сервере внутри текстового редактора.
+/* AI Текст — помощник и файлы на сервере внутри текстового редактора.
  *
  * Панель в браузере разговаривает с моделью через api/assistant.php, а действия
  * выполняет в самом редакторе через window.aiword (apps/wordcraft-web/src/web/bridge.rs):
@@ -535,7 +535,7 @@
   function showEmpty() {
     log.innerHTML = `<div class="st-empty">
       <h3>Чем помочь?</h3>
-      <p>Спросите, где найти функцию в AI-Word, или попросите оформить, проверить или написать текст за вас.</p>
+      <p>Спросите, где найти функцию в AI Текст, или попросите оформить, проверить или написать текст за вас.</p>
       <button class="st-mini primary st-start-tpl">Быстрые задачи</button>
       <div class="st-chips">
         <button class="st-chip" data-act="1">Оформи документ по ГОСТ: Times New Roman 14, интервал 1,5, отступ 1,25 см, поля 30/15/20/20</button>
@@ -791,7 +791,7 @@
     try {
       r = await post(payload);
     } catch (e) {
-      console.warn('AI-Word: запрос к помощнику оборвался', e);
+      console.warn('AI Текст: запрос к помощнику оборвался', e);
       if (!hasImages(payload)) throw new Error(await explainNoAnswer(took()));
       try { r = await post(withoutImages(payload)); } catch { throw new Error(await explainNoAnswer(took())); }
       tellImagesBlocked();
@@ -1204,13 +1204,13 @@
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60000);
-      } catch (e) { console.warn('AI-Word: скачивание не удалось', e); }
+      } catch (e) { console.warn('AI Текст: скачивание не удалось', e); }
     }
     // Копия открытого документа на компьютер пользователя (.docx), без сохранения на сервере.
     async function downloadCopy() {
       if (!PC.ready()) return;
       let title = server ? stem(server) : '';
-      if (!title) { try { title = String((await PC.call('ui.inspect')).title || '').replace(/\s*[•*]?\s*-\s*AI-Word$/, '').trim(); } catch { /* имя по умолчанию */ } }
+      if (!title) { try { title = String((await PC.call('ui.inspect')).title || '').replace(/\s*[•*]?\s*-\s*AI Текст$/, '').trim(); } catch { /* имя по умолчанию */ } }
       try { await PC.exec('file.saveAs', { path: (title || 'Документ') + '.docx', copy: true }); toast('Документ скачан на компьютер.'); } catch (e) { toast('Не удалось скачать: ' + e.message, true); }
     }
     async function save(saveAs) {
@@ -1310,20 +1310,20 @@
       try {
         const j = await (await fetch(CFG.files + '?action=fonts', { credentials: 'same-origin', cache: 'no-store' })).json();
         for (const f of (j && j.ok && j.fonts) || []) {
-          await add(f.name, CFG.files + '?action=font&name=' + encodeURIComponent(f.name)).catch((e) => console.warn('AI-Word: шрифт ' + f.name, e));
+          await add(f.name, CFG.files + '?action=font&name=' + encodeURIComponent(f.name)).catch((e) => console.warn('AI Текст: шрифт ' + f.name, e));
         }
       } catch { /* нет входа или сервера — только двойники */ }
       try {
         const m = await (await fetch(CFG.fonts, { cache: 'no-cache' })).json();
         for (const f of (m && m.fonts) || []) {
-          await add(f.file, 'fonts/' + encodeURIComponent(f.file)).catch((e) => console.warn('AI-Word: шрифт ' + f.file, e));
+          await add(f.file, 'fonts/' + encodeURIComponent(f.file)).catch((e) => console.warn('AI Текст: шрифт ' + f.file, e));
         }
       } catch { /* сборка без шрифтов */ }
       // Русская орфография: словарь Hunspell из папки dictionaries/ (в браузере системных словарей нет).
       try {
         const [aff, dic] = await Promise.all(['ru_RU.aff', 'ru_RU.dic'].map((f) => fetch('dictionaries/' + f).then((r) => (r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status))))));
         VC().addDictionary('ru', aff, dic);
-      } catch (e) { console.warn('AI-Word: русский словарь не загрузился', e); }
+      } catch (e) { console.warn('AI Текст: русский словарь не загрузился', e); }
       return loaded;
     }
     return { start, families: () => loaded.slice() };
@@ -1715,7 +1715,7 @@
           const id = ui && ui.ui && ui.ui.theme;
           if (typeof id === 'string') applyPanelTheme(id.toLowerCase());
           // Заголовок вкладки браузера — имя документа (окно браузера редактор сам не переименует).
-          if (ui && typeof ui.title === 'string') document.title = ui.title ? `${ui.title}${ui.dirty ? ' •' : ''} — AI-Word` : 'AI-Word';
+          if (ui && typeof ui.title === 'string') document.title = ui.title ? `${ui.title}${ui.dirty ? ' •' : ''} — AI Текст` : 'AI Текст';
         } catch { /* не важно */ }
       }
       await sleep(2000);
@@ -1799,7 +1799,7 @@
     commands().catch(() => {});
     watchTheme();
     Gallery.start();
-    fonts.then((f) => { if (f.length) console.info('AI-Word: шрифты', f.join(', ')); });
+    fonts.then((f) => { if (f.length) console.info('AI Текст: шрифты', f.join(', ')); });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

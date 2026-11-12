@@ -114,7 +114,7 @@ debug = 0
 [patch.crates-io]
 krilla = { git = "https://github.com/storytold/craft-libs", rev = "9f75d3dc19b4b514c4f3d4847ed1ec1b0e86b4ef" }
 
-# The browser build (apps/wordcraft-web, AI-Word): small and fast to download.
+# The browser build (apps/wordcraft-web, AI Текст): small and fast to download.
 [profile.web-release]
 inherits = "release"
 opt-level = "s"

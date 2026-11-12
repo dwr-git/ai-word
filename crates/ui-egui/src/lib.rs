@@ -123,15 +123,15 @@ pub struct Services {
     /// Web: hand bytes to the browser as a download. An error means no download started (the
     /// browser can't tell the page whether the user then kept the file).
     pub download: Option<Box<dyn Fn(&str, &[u8]) -> Result<(), String>>>,
-    /// Web (AI-Word): hand a Save or Save As in a format that keeps everything to the page, which
+    /// Web (AI Текст): hand a Save or Save As in a format that keeps everything to the page, which
     /// keeps the file in the user's files on the server, instead of downloading it: (file name,
     /// the document's path, the bytes, whether a name was given — Save As). `Ok(true)` when the
     /// page took it; `Ok(false)` downloads as usual. The page reports a failed upload itself.
     pub save_to_page: Option<Box<dyn Fn(&str, Option<&str>, &[u8], bool) -> Result<bool, String>>>,
-    /// Web (AI-Word): leave the editor for the site it lives on (`STUDIO_CONFIG.homeUrl`). The
+    /// Web (AI Текст): leave the editor for the site it lives on (`STUDIO_CONFIG.homeUrl`). The
     /// title bar shows a house for it when set.
     pub go_home: Option<Box<dyn Fn()>>,
-    /// Web (AI-Word): open the page's AI menu for the selection (or the caret) at this point of
+    /// Web (AI Текст): open the page's AI menu for the selection (or the caret) at this point of
     /// the window (egui points). The mini toolbar shows an AI chip and the text context menu an
     /// "AI Assistant…" item when set.
     pub ai_assist: Option<Box<dyn Fn(f32, f32)>>,
@@ -1042,7 +1042,7 @@ impl WordApp {
                 if matches!(id, "file.save" | "file.saveAs") { self.session.password.as_ref().map(wordcraft_engine::Password::as_str) } else { None };
             let opts = wordcraft_engine::cmd::file::export_options(&self.session, &params);
             let bytes = wordcraft_engine::io::save_bytes_with(&name, &self.session.doc, password, &opts)?;
-            // AI-Word: the page keeps saves in the user's files on the server.
+            // AI Текст: the page keeps saves in the user's files on the server.
             if matches!(id, "file.save" | "file.saveAs")
                 && !copy
                 && keeps_everything(&name)
@@ -1815,7 +1815,7 @@ impl WordApp {
             // MCP get an error.
             "ui.makeDefaultApp" => {
                 return Some(Err(
-                    "making AI-Word the default app needs a click in File › Options › General; scripts and agents can't change system defaults"
+                    "making AI Текст the default app needs a click in File › Options › General; scripts and agents can't change system defaults"
                         .into(),
                 ));
             }
@@ -1882,20 +1882,20 @@ impl WordApp {
     /// command, so nothing programmatic (control channel, MCP, macros) can change system defaults.
     pub(crate) fn make_default_app(&mut self) -> Result<Value, String> {
         let Some(hook) = self.services.make_default_app.as_ref() else {
-            return Err("AI-Word can't change the default apps here; use your system's settings".into());
+            return Err("AI Текст can't change the default apps here; use your system's settings".into());
         };
         match hook() {
             Ok(DefaultApp::SettingsOpened) => {
-                self.status(tl!("In Default apps, choose AI-Word for the document types you want it to open."));
+                self.status(tl!("In Default apps, choose AI Текст for the document types you want it to open."));
                 Ok(json!({"settingsOpened": true}))
             }
             Ok(DefaultApp::MadeDefault) => {
-                self.status(tl!("AI-Word is now the default app for Word documents."));
+                self.status(tl!("AI Текст is now the default app for Word documents."));
                 Ok(json!({"default": true}))
             }
             Err(e) => {
                 log::warn!("make default app: {e}");
-                let msg = i18n::fmt(tl!("Couldn't make AI-Word the default: {error}"), &[("error", &e)]);
+                let msg = i18n::fmt(tl!("Couldn't make AI Текст the default: {error}"), &[("error", &e)]);
                 self.status(msg.clone());
                 Err(msg)
             }
@@ -2511,9 +2511,9 @@ impl WordApp {
             ctx.open_url(egui::OpenUrl::new_tab(url));
         }
         let title = if self.has_document() {
-            format!("{}{} - AI-Word", self.title_stem(), if self.session.dirty { " •" } else { "" })
+            format!("{}{} - AI Текст", self.title_stem(), if self.session.dirty { " •" } else { "" })
         } else {
-            "AI-Word".to_string()
+            "AI Текст".to_string()
         };
         if title != self.sent_title {
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
@@ -3574,7 +3574,7 @@ mod tests {
         let a = h.state_mut();
         assert!(!a.ui.backstage, "Esc leaves the Start screen");
         assert!(!a.has_document(), "for an empty window, not a blank document");
-        assert_eq!(a.sent_title, "AI-Word", "the window is titled with the app alone");
+        assert_eq!(a.sent_title, "AI Текст", "the window is titled with the app alone");
         // The ribbon's commands are off, but Help, the File tab and the settings work.
         for id in ["format.bold", "text.insert", "file.save", "file.saveAs", "file.print", "edit.paste", "insert.table", "ui.print"] {
             assert!(!widgets::enabled(a, id), "{id} is off with no document");
@@ -6296,7 +6296,7 @@ mod tests {
     #[test]
     fn the_default_app_button_shows_only_with_the_hosts_hook() {
         use egui_kittest::kittest::Queryable;
-        const LABEL: &str = "Make AI-Word the default for Word documents…";
+        const LABEL: &str = "Make AI Текст the default for Word documents…";
         for hook in [false, true] {
             let calls = std::rc::Rc::new(std::cell::Cell::new(0));
             let mut a = app();
@@ -7582,7 +7582,7 @@ mod tests {
 
     #[test]
     fn web_export_downloads_a_copy_and_never_goes_to_the_page() {
-        // AI-Word: File › Export › Word (.docx) is a copy for the user's computer. It used to be
+        // AI Текст: File › Export › Word (.docx) is a copy for the user's computer. It used to be
         // handed to the page as a save (into the server files), so Export seemed to work for PDF only.
         let downloaded: std::rc::Rc<std::cell::RefCell<Vec<String>>> = Default::default();
         let to_page: std::rc::Rc<std::cell::RefCell<Vec<String>>> = Default::default();

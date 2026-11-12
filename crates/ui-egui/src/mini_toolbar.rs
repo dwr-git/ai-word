@@ -199,7 +199,7 @@ pub fn show(app: &mut WordApp, ctx: &egui::Context, selection: Rect, viewport: R
     ai_chip(app, ctx, bar, viewport);
 }
 
-/// Width and height of the AI chip beside the bar (AI-Word on the web).
+/// Width and height of the AI chip beside the bar (AI Текст on the web).
 const AI_CHIP_W: f32 = 58.0;
 const AI_CHIP_H: f32 = 28.0;
 

@@ -60,7 +60,7 @@ Generated-in-code art is original and has no file to list: the UI icon set (`cra
 | craft-fonts (optional build input, not files in this repo): BIZ UDPGothic, BIZ UDMincho, Shippori Mincho, Noto Sans CJK SC, Noto Sans Arabic | see https://github.com/storytold/craft-fonts/blob/main/ATTRIBUTION.md | embedded only when built with `CRAFT_FONTS_DIR` (all official releases) | OFL-1.1 | Japanese and Chinese UI, Japanese document fallback |
 | craft-i18n (optional build input, not files in this repo): the interface translations | see https://github.com/storytold/craft-i18n/blob/main/ATTRIBUTION.md, which credits every translator of WordCraft's former in-repo catalogs (`crates/ui-egui/src/i18n/*.tsv`, migrated at `wordcraft@806a945`) | embedded only when built with `CRAFT_I18N_DIR`, at the commit in `craft-i18n.rev` (all official releases) | MIT OR Apache-2.0 | Interface languages other than English; clean-room translations from the English interface labels |
 
-## AI-Word additions (not in the repository; fetched by the build)
+## AI Текст additions (not in the repository; fetched by the build)
 
 | Path in the package | Author | Source | Licence | Notes |
 |---|---|---|---|---|
@@ -68,4 +68,5 @@ Generated-in-code art is original and has no file to list: the UI icon set (`cra
 | `fonts/Carlito-*.ttf` | tyPoland Łukasz Dziedzic | Ubuntu package `fonts-crosextra-carlito` (CI) | SIL Open Font License 1.1 | Metric-compatible with Calibri; `fonts/LICENSE-Carlito.txt` |
 | `fonts/Caladea-*.ttf` | Andrés Torresi, Carolina Giovagnoli (Huerta Tipográfica) | Ubuntu package `fonts-crosextra-caladea` (CI) | Apache License 2.0 | Metric-compatible with Cambria; `fonts/LICENSE-Caladea.txt` |
 | `dictionaries/ru_RU.aff`, `ru_RU.dic` | Alexander I. Lebedev | Ubuntu package `hunspell-ru` (LibreOffice dictionaries) | BSD-style (licence text kept as `dictionaries/LICENSE-ru_RU.txt`) | Russian spelling |
-| `favicon.png`, `apple-touch-icon.png` (`studio/web/`) | AI-Word contributors | drawn for AI-Word | MIT OR Apache-2.0 | A page with lines of text in a frame |
+| `favicon.png`, `favicon-16.png`, `favicon.ico` (`studio/web/`) | Dewiar (project owner) | Dewiar favicon — owner's own artwork, provided by the project owner for use in these apps | provided by the project owner for use in these apps | Browser-tab icon, the same in every AI app |
+| `apple-touch-icon.png` (`studio/web/`) | Dewiar | original work made for this project (icon «text», 512 px resized to 180 px) | MIT OR Apache-2.0 | Home-screen icon of AI Текст |

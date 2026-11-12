@@ -1,7 +1,7 @@
 //! `window.aiword`: the control channel for the page, as promises.
 //!
 //! The same JSON methods as the desktop control channel (`crates/ui-egui/src/control.rs`), so the
-//! assistant panel next to the editor (`studio/`) drives AI-Word with the commands the CLI and the
+//! assistant panel next to the editor (`studio/`) drives AI Текст with the commands the CLI and the
 //! MCP server use:
 //!
 //! ```js
@@ -109,10 +109,10 @@ fn request(method: &str, params: Value) -> js_sys::Promise {
         match sent {
             Some(true) => WAITING.with(|w| w.borrow_mut().push((rx, resolve, reject))),
             Some(false) => {
-                let _ = reject.call1(&JsValue::NULL, &error("AI-Word has closed"));
+                let _ = reject.call1(&JsValue::NULL, &error("AI Текст has closed"));
             }
             None => {
-                let _ = reject.call1(&JsValue::NULL, &error("AI-Word is not running yet"));
+                let _ = reject.call1(&JsValue::NULL, &error("AI Текст is not running yet"));
             }
         }
     });
@@ -148,7 +148,7 @@ fn open(name: String, bytes: JsValue) -> Result<(), JsValue> {
     let name = clean_name(&name, "Документ.docx");
     LINK.with(|l| {
         let link = l.borrow();
-        let link = link.as_ref().ok_or_else(|| error("AI-Word is not running yet"))?;
+        let link = link.as_ref().ok_or_else(|| error("AI Текст is not running yet"))?;
         link.inbox.lock().unwrap_or_else(|e| e.into_inner()).push((name, bytes));
         link.ctx.request_repaint();
         Ok(())
@@ -263,7 +263,7 @@ pub fn install() -> Result<(), JsValue> {
         Closure::<dyn Fn() -> bool>::new(|| LINK.with(|l| l.borrow().as_ref().is_some_and(|link| link.ctx.text_edit_focused()))).into_js_value(),
     )?;
     set(&obj, "takesSaves", JsValue::FALSE)?;
-    set(&obj, "product", JsValue::from_str("AI-Word"))?;
+    set(&obj, "product", JsValue::from_str("AI Текст"))?;
     let w = web_sys::window().ok_or("no window")?;
     js_sys::Reflect::set(&w, &"aiword".into(), &obj)?;
     let tick = Closure::<dyn Fn()>::new(poll_replies).into_js_value();
