@@ -429,9 +429,13 @@ fn download(saves: &AsyncSaves, ctx: &egui::Context, path: &str, bytes: &[u8]) -
     let name = std::path::Path::new(path).file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "document".into());
     let window = web_sys::window().ok_or("no window")?;
 
-    // On browsers supporting the File System Access API (Chromium: Chrome, Edge, etc.),
-    // `showSaveFilePicker` lets the user choose the save location and filename natively.
-    if let Ok(picker_val) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("showSaveFilePicker"))
+    // AI-Word: a copy for the computer is an ordinary download (into Downloads), the same in every
+    // browser; the document itself lives in «Мои документы» on the server. The browser's own
+    // Save As window (showSaveFilePicker) confused people with its file type list, and an export
+    // clicked in the editor often lacked the user gesture it needs. `?picker` brings it back.
+    let picker_wanted = window.location().search().is_ok_and(|q| q.contains("picker"));
+    if picker_wanted
+        && let Ok(picker_val) = js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("showSaveFilePicker"))
         && let Ok(picker_fn) = picker_val.dyn_into::<js_sys::Function>()
     {
         match trigger_save_file_picker(saves, ctx, &window, &picker_fn, &name, bytes) {
