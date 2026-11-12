@@ -1021,6 +1021,9 @@ impl WordApp {
         if self.services.download.is_some() && matches!(id, "file.save" | "file.saveAs" | "file.exportPdf" | "file.exportPng") {
             let name = params.get("path").and_then(Value::as_str).map(str::to_string).unwrap_or_else(|| self.default_save_name());
             let name = if id == "file.exportPdf" && !name.ends_with(".pdf") { format!("{name}.pdf") } else { name };
+            // An export (`copy`) is a download for the user's computer: it neither goes to the
+            // page's server files nor marks the document saved.
+            let copy = params.get("copy").and_then(Value::as_bool).unwrap_or(false);
             // A save with a password encrypts this and later saves (`file.save`'s `password`).
             if matches!(id, "file.save" | "file.saveAs")
                 && let Some(pw) = params.get("password").filter(|v| !v.is_null())
@@ -1031,7 +1034,7 @@ impl WordApp {
                 self.session.run("file.encrypt", &json!({"password": pw})).map_err(|e| e.to_string())?;
             }
             // A save is a save, download or not: advance the revision and modified stamp (#262).
-            if matches!(id, "file.save" | "file.saveAs") {
+            if matches!(id, "file.save" | "file.saveAs") && !copy {
                 self.session.stamp_save();
             }
             // Word documents are encrypted with the document's password, if it has one.
@@ -1041,6 +1044,7 @@ impl WordApp {
             let bytes = wordcraft_engine::io::save_bytes_with(&name, &self.session.doc, password, &opts)?;
             // AI-Word: the page keeps saves in the user's files on the server.
             if matches!(id, "file.save" | "file.saveAs")
+                && !copy
                 && keeps_everything(&name)
                 && let Some(to_page) = &self.services.save_to_page
             {
@@ -1073,7 +1077,7 @@ impl WordApp {
             }
             // An export is a copy, and so is a save in a format that doesn't keep everything (a
             // page image, plain text): the document itself still has unsaved changes.
-            let marked_saved = matches!(id, "file.save" | "file.saveAs") && keeps_everything(&name);
+            let marked_saved = matches!(id, "file.save" | "file.saveAs") && !copy && keeps_everything(&name);
             if marked_saved {
                 self.session.dirty = false;
             }
@@ -7574,6 +7578,37 @@ mod tests {
         a.autosave_tick(now_ms() + 20_000.0);
         assert!(a.status_msg.is_none());
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn web_export_downloads_a_copy_and_never_goes_to_the_page() {
+        // AI-Word: File › Export › Word (.docx) is a copy for the user's computer. It used to be
+        // handed to the page as a save (into the server files), so Export seemed to work for PDF only.
+        let downloaded: std::rc::Rc<std::cell::RefCell<Vec<String>>> = Default::default();
+        let to_page: std::rc::Rc<std::cell::RefCell<Vec<String>>> = Default::default();
+        let (d, t) = (downloaded.clone(), to_page.clone());
+        let services = Services {
+            download: Some(Box::new(move |n: &str, _b: &[u8]| {
+                d.borrow_mut().push(n.to_string());
+                Ok(())
+            })),
+            save_to_page: Some(Box::new(move |n: &str, _p: Option<&str>, _b: &[u8], _named: bool| {
+                t.borrow_mut().push(n.to_string());
+                Ok(true)
+            })),
+            ..Default::default()
+        };
+        let mut a = WordApp::new(Session::new(wordcraft_doc::Document::new()), services);
+        a.run("text.insert", json!({"text": "Hello"})).unwrap();
+        for name in ["Doc.docx", "Doc.odt", "Doc.rtf", "Doc.html", "Doc.txt"] {
+            a.run("file.saveAs", json!({"path": name, "copy": true})).unwrap();
+        }
+        assert_eq!(*downloaded.borrow(), ["Doc.docx", "Doc.odt", "Doc.rtf", "Doc.html", "Doc.txt"]);
+        assert!(to_page.borrow().is_empty(), "an export went to the server files: {:?}", to_page.borrow());
+        assert!(a.session.dirty, "an export marked the document saved");
+        // A real save still goes to the page.
+        a.run("file.save", json!({})).unwrap();
+        assert_eq!(to_page.borrow().len(), 1);
     }
 
     /// Web Save of an opened .docm downloads a .docm, so its macros stay (Codex review, docm lane).

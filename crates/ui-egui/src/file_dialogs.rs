@@ -292,12 +292,14 @@ impl WordApp {
             }
             AfterPick::Export { ext } => {
                 let Some(path) = picked else { return Ok(json!({"cancelled": true})) };
+                // `copy`: an export is a copy for the user's computer (the web page downloads it),
+                // never the document's own file (#AI-Word: Export › DOCX used to go to the server).
                 let r = if ext == "png" {
                     self.run("file.exportPng", json!({"path": path}))
                 } else if ext == crate::print_page::EXPORT_WORD_2003 {
-                    self.run("file.saveAs", json!({"path": path, "format": ext}))
+                    self.run("file.saveAs", json!({"path": path, "format": ext, "copy": true}))
                 } else {
-                    self.run("file.saveAs", json!({"path": path}))
+                    self.run("file.saveAs", json!({"path": path, "copy": true}))
                 };
                 if r.is_ok() {
                     self.status(crate::i18n::fmt(tl!("Exported {path}"), &[("path", &path)]));
