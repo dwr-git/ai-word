@@ -2142,7 +2142,21 @@ impl WordApp {
         match &self.session.path {
             Some(p) => p.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| tl!("Document1").into()),
             None => match &self.session.file_name {
-                Some(name) => name.clone(),
+                // A name kept with its extension (a document saved to the web page's My Files)
+                // would otherwise give exports like "Report.docx.pdf".
+                Some(name) => {
+                    let path = std::path::Path::new(name);
+                    let known = path.extension().and_then(std::ffi::OsStr::to_str).is_some_and(|e| {
+                        matches!(
+                            e.to_ascii_lowercase().as_str(),
+                            "docx" | "docm" | "dotx" | "dotm" | "doc" | "dot" | "odt" | "rtf" | "txt" | "md" | "htm" | "html" | "xml"
+                        )
+                    });
+                    match path.file_stem().and_then(std::ffi::OsStr::to_str) {
+                        Some(stem) if known && !stem.is_empty() => stem.to_string(),
+                        _ => name.clone(),
+                    }
+                }
                 None if self.session.doc.core.title.is_empty() => tl!("Document1").into(),
                 None => self.session.doc.core.title.clone(),
             },
@@ -7609,6 +7623,17 @@ mod tests {
         // A real save still goes to the page.
         a.run("file.save", json!({})).unwrap();
         assert_eq!(to_page.borrow().len(), 1);
+    }
+
+    /// A document saved to the web page keeps its name with the extension; exports used to come
+    /// out as "Doc.docx.pdf".
+    #[test]
+    fn title_stem_drops_a_kept_document_extension() {
+        let mut a = WordApp::new(Session::new(wordcraft_doc::Document::new()), Services::default());
+        a.session.file_name = Some("Отчёт.docx".into());
+        assert_eq!(a.title_stem(), "Отчёт");
+        a.session.file_name = Some("v1.2 final".into());
+        assert_eq!(a.title_stem(), "v1.2 final");
     }
 
     /// Web Save of an opened .docm downloads a .docm, so its macros stay (Codex review, docm lane).

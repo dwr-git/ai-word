@@ -2727,7 +2727,9 @@ fn body(app: &mut WordApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                     ui.add_space(6.0);
                     // AI Текст works offline: no links out of the page.
                     ui.label(tl!("Based on WordCraft by the ArtCraft team (github.com/storytold/wordcraft)."));
-                    ui.label(tl!("Word is a trademark of Microsoft Corporation. AI Текст is not affiliated with Microsoft and works with files in its formats."));
+                    ui.label(tl!(
+                        "Word is a trademark of Microsoft Corporation. AI Текст is not affiliated with Microsoft and works with files in its formats."
+                    ));
                     ui.add_space(6.0);
                     ui.label(
                         egui::RichText::new(tl!("MIT OR Apache-2.0. Copyright (c) 2026 ArtCraft Team and the AI Текст contributors.")).small().weak(),

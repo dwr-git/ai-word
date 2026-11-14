@@ -595,8 +595,33 @@ fn save_as_page(app: &mut WordApp, ui: &mut Ui) {
         ui.label(egui::RichText::new(&error).color(ui.visuals().error_fg_color));
         ui.add_space(6.0);
     }
-    if ui.button(egui::RichText::new(tl!("Browse…")).font(medium(14.0))).clicked() {
+    // AI Текст in the browser: Save As keeps the document in My Files on the server, so getting it
+    // onto this computer gets buttons of its own; people looked for them here and found none.
+    let web = app.services.save_to_page.is_some();
+    let browse = if web { tl!("Save to My Files…") } else { tl!("Browse…") };
+    if ui.button(egui::RichText::new(browse).font(medium(14.0))).clicked() {
         app.save_as_dialog();
+    }
+    if web {
+        ui.add_space(8.0);
+        if ui
+            .button(egui::RichText::new(tl!("Download to this computer (.docx)")).font(medium(14.0)))
+            .on_hover_text(tl!("A copy lands in the browser's Downloads folder. The document in My Files stays as it is."))
+            .clicked()
+        {
+            let path = app.default_save_name();
+            if let Err(e) = app.run("file.saveAs", json!({"path": path, "copy": true})) {
+                ui.ctx().data_mut(|d| d.insert_temp(save_as_error_id(), e));
+            }
+        }
+        ui.add_space(8.0);
+        if ui
+            .button(egui::RichText::new(tl!("Download as PDF")).font(medium(14.0)))
+            .on_hover_text(tl!("A PDF copy for reading and printing lands in the browser's Downloads folder."))
+            .clicked()
+        {
+            app.export_dialog("pdf");
+        }
     }
     // A Word template in the user templates folder, which File › New lists under Personal (#2852).
     ui.add_space(8.0);
@@ -1520,6 +1545,40 @@ mod tests {
         h.run_steps(4);
         assert!(h.query_by_label("Browse…").is_some(), "Save As has Browse button");
         assert!(h.query_by_label("Recent").is_none(), "Save As has no list that opens documents");
+    }
+
+    /// AI Текст in the browser: Save As keeps the document in My Files, and downloading to the
+    /// computer has its own buttons there, which people looked for and couldn't find.
+    #[test]
+    fn web_save_as_page_offers_downloads() {
+        let downloaded: std::rc::Rc<std::cell::RefCell<Vec<String>>> = Default::default();
+        let d = downloaded.clone();
+        let services = Services {
+            download: Some(Box::new(move |n: &str, _b: &[u8]| {
+                d.borrow_mut().push(n.to_string());
+                Ok(())
+            })),
+            save_to_page: Some(Box::new(|_n: &str, _p: Option<&str>, _b: &[u8], _named: bool| Ok(true))),
+            ..Default::default()
+        };
+        let mut a = WordApp::new(wordcraft_engine::Session::new(wordcraft_doc::Document::new()), services);
+        a.run("text.insert", json!({"text": "Hello"})).unwrap();
+        a.run("ui.backstage", json!({"value": true, "page": "saveAs"})).unwrap();
+        let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(1440.0, 900.0)).build_ui_state(
+            |ui, app: &mut WordApp| {
+                let ctx = ui.ctx().clone();
+                app.logic(&ctx);
+                app.ui(ui);
+            },
+            a,
+        );
+        h.run_steps(4);
+        assert!(h.query_by_label("Save to My Files…").is_some(), "Save As names where the document goes");
+        assert!(h.query_by_label("Download as PDF").is_some(), "Save As offers a PDF download");
+        h.get_by_label("Download to this computer (.docx)").click();
+        h.run_steps(4);
+        assert_eq!(downloaded.borrow().len(), 1, "one download: {:?}", downloaded.borrow());
+        assert!(downloaded.borrow()[0].ends_with(".docx"), "a .docx: {:?}", downloaded.borrow());
     }
 
     #[test]
